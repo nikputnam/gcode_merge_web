@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>G-code merge</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <h1>G-code merge</h1>
+        <p class="hint">Combine several sliced jobs into one file that prints the objects one after another. Drop the G-code files in, drag the footprints around the bed, and download. Works with PrusaSlicer, TRAvel web, WeaveSlicer and pot toy output.</p>
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept=".gcode,.gco,.g" multiple />
+          <span id="dropText">Drop .gcode files here or click to choose</span>
+        </label>
+        <p class="hint">No files handy? <a href="#" id="samples">Load sample files</a> (two PrusaSlicer parts and a pot toy spiral).</p>
+        <fieldset>
+          <legend>Objects, in print order</legend>
+          <div id="objects" class="objects"></div>
+          <div class="row small">
+            <button id="arrange" class="secondary" disabled title="Place every object again from the front-left corner, in print order, with the clearance the extruder needs.">Arrange all</button>
+            <button id="sortHeight" class="secondary" disabled title="Reorder so the shortest objects print first. Short objects can sit closer to objects printed after them.">Shortest first</button>
+            <button id="clear" class="secondary" disabled>Clear</button>
+          </div>
+          <p class="hint">Drag an object to move it (hold shift to snap to 5 mm). With one selected, arrow keys nudge it and R rotates it.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Bed</legend>
+          <label>Width X (mm) <input type="number" id="bedWidth" value="200" step="1" min="10" /></label>
+          <label>Depth Y (mm) <input type="number" id="bedDepth" value="200" step="1" min="10" /></label>
+          <label title="On for delta printers and others whose X0 Y0 is the middle of the bed."><span>Origin at bed centre</span><input type="checkbox" id="originCenter" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Extruder clearance</legend>
+          <label title="Radius of the nozzle tip and its cone. A finished object closer than this to where the nozzle will go may be at most one layer tall.">Nozzle radius (mm) <input type="number" id="nozzleRadius" value="2.5" step="0.1" min="0" /></label>
+          <label title="Height from the nozzle tip up to the first wide part of the extruder (extruder body, heater block, fan duct). Objects between nozzle radius and shroud radius away may be at most this tall.">Nozzle height (mm) <input type="number" id="nozzleHeight" value="4" step="0.5" min="0" /></label>
+          <label title="Radius of the widest part of the extruder around the nozzle axis. Objects farther away than this are only limited by the gantry.">Shroud radius (mm) <input type="number" id="shroudRadius" value="30" step="1" min="0" /></label>
+          <label title="Height from the nozzle tip to the X gantry or any other part that spans the whole bed. Only one object may be taller than this, and it must be printed last. Leave blank for printers where nothing spans the bed.">Gantry height (mm, blank = none) <input type="number" id="gantryHeight" value="" step="1" min="0" /></label>
+          <details class="help">
+            <summary>What do these mean?</summary>
+            <svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" aria-label="Side view of an extruder next to three finished objects">
+              <rect x="0" y="10" width="300" height="8" class="hl-part" />
+              <text x="150" y="30" class="hl-label" text-anchor="middle">gantry</text>
+              <rect x="55" y="60" width="130" height="46" rx="4" class="hl-part" />
+              <text x="120" y="88" class="hl-label" text-anchor="middle">extruder body / shroud</text>
+              <polygon points="104,106 136,106 124,150 116,150" class="hl-part" />
+              <line x1="0" y1="150" x2="300" y2="150" class="hl-dim" stroke-dasharray="3 3" />
+              <text x="4" y="146" class="hl-label">nozzle tip</text>
+              <rect x="0" y="180" width="300" height="2" class="hl-bed" />
+              <rect x="126" y="146" width="6" height="34" class="hl-wall-a" />
+              <rect x="170" y="110" width="6" height="70" class="hl-wall-b" />
+              <rect x="262" y="22" width="6" height="158" class="hl-wall-c" />
+              <line x1="120" y1="150" x2="120" y2="164" class="hl-dim" />
+              <line x1="104" y1="160" x2="120" y2="160" class="hl-dim" />
+              <text x="101" y="163" class="hl-label hl-dim-t" text-anchor="end">nozzle radius</text>
+              <line x1="120" y1="106" x2="120" y2="150" class="hl-dim" transform="translate(-55 0)" />
+              <text x="60" y="130" class="hl-label hl-dim-t" text-anchor="end">nozzle height</text>
+              <line x1="120" y1="56" x2="185" y2="56" class="hl-dim" />
+              <text x="152" y="52" class="hl-label hl-dim-t" text-anchor="middle">shroud radius</text>
+              <line x1="290" y1="18" x2="290" y2="150" class="hl-dim" />
+              <text x="286" y="90" class="hl-label hl-dim-t" text-anchor="end">gantry height</text>
+            </svg>
+            <p>Each object is printed from the bed up while the earlier ones stand finished beside it. The same clearance model as TRAvel web decides how close they may be: looking down the nozzle axis, a finished object may stand higher than the nozzle tip by an amount that depends on how far away it is.</p>
+            <ul>
+              <li><span class="sw hl-wall-a"></span><b>Closer than the nozzle radius</b>: at most one layer. In practice objects must not overlap.</li>
+              <li><span class="sw hl-wall-b"></span><b>Between nozzle radius and shroud radius</b>: at most the nozzle height. Coasters and tiles can be packed this closely.</li>
+              <li><span class="sw hl-wall-c"></span><b>Beyond the shroud radius</b>: at most the gantry height, or unlimited if blank. One object taller than the gantry can still go last.</li>
+            </ul>
+            <p>Only the part of an object above each threshold counts, so a wide foot under a narrow tower needs less room than the tower. Measure your extruder from the nozzle tip and add a millimetre or two of margin.</p>
+          </details>
+        </fieldset>
+        <fieldset>
+          <legend>Between objects</legend>
+          <label title="The nozzle lifts this far above the tallest finished object before travelling to the next one.">Travel lift (mm) <input type="number" id="travelLift" value="2" step="0.5" min="0" /></label>
+          <label title="Blank uses the first file's travel speed, or 150 mm/s when the file has no slicer config.">Travel speed (mm/s, blank = from file) <input type="number" id="travelSpeed" value="" step="5" min="1" /></label>
+          <label title="Retraction before the travel, if the object did not already end retracted. Blank uses the file's retract length, or 1 mm.">Retract (mm, blank = from file) <input type="number" id="retractLength" value="" step="0.1" min="0" /></label>
+          <label title="Blank uses the file's retract speed, or 15 mm/s.">Retract speed (mm/s, blank = from file) <input type="number" id="retractSpeed" value="" step="1" min="1" /></label>
+        </fieldset>
+        <div class="row">
+          <button id="merge" disabled>Merge &amp; preview</button>
+          <button id="download" disabled>Download G-code</button>
+        </div>
+        <div id="messages"></div>
+        <div id="stats"></div>
+      </aside>
+      <main id="main">
+        <div class="tabs">
+          <button id="tabArrange" class="tab active">Arrange</button>
+          <button id="tabPreview" class="tab">3D preview</button>
+          <span id="previewCtl" class="ctl" hidden>
+            <label>objects shown <span id="objLabel">all</span> <input type="range" id="objRange" min="0" max="0" value="0" /></label>
+            <label><input type="checkbox" id="showTravel" checked /> travels</label>
+          </span>
+        </div>
+        <div id="arrangeView" class="view"><canvas id="bed"></canvas></div>
+        <div id="previewView" class="view" hidden></div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

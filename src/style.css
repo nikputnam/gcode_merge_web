@@ -1,0 +1,66 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; font-size: 14px; }
+body { margin: 0; }
+#app { display: flex; height: 100vh; }
+#panel { flex: 0 0 360px; width: 360px; padding: 12px 14px; overflow-y: auto; box-sizing: border-box; border-right: 1px solid #8884; background: Canvas; }
+#main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; background: #1b1e24; color: #ddd; }
+.tabs { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid #333; }
+.tab { flex: 0 0 auto; padding: 4px 12px; background: transparent; color: #aaa; border: 1px solid #444; font-weight: 500; }
+.tab.active { background: #4a9; color: white; border-color: #4a9; }
+.ctl { margin-left: auto; display: flex; gap: 14px; font-size: 12px; align-items: center; }
+.ctl[hidden] { display: none; }
+.ctl label { display: flex; align-items: center; gap: 6px; }
+.view { flex: 1 1 0; min-height: 0; position: relative; overflow: hidden; }
+#bed { display: block; outline: none; }
+#previewView canvas { display: block; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+h1 { font-size: 18px; margin: 0 0 6px; }
+.hint { font-size: 12px; opacity: 0.8; margin: 0 0 10px; }
+.drop { display: block; border: 2px dashed #8886; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; margin-bottom: 10px; }
+.drop.over { border-color: #4a9; background: #4a91; }
+.drop input { display: none; }
+fieldset { border: 1px solid #8884; border-radius: 6px; margin: 0 0 10px; padding: 6px 10px 8px; }
+legend { font-size: 12px; opacity: 0.8; }
+fieldset > label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+fieldset input[type=number] { width: 80px; }
+.row { display: flex; gap: 8px; margin-bottom: 10px; }
+.row.small { margin: 6px 0; }
+.row.small button { padding: 4px 6px; font-size: 12px; }
+button { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #8886; background: #4a9; color: white; cursor: pointer; font-weight: 600; }
+button.secondary { background: transparent; color: inherit; font-weight: 500; }
+button:disabled { opacity: 0.4; cursor: default; }
+#messages .err { color: #e55; font-size: 12px; margin: 4px 0; }
+#messages .warn { color: #d93; font-size: 12px; margin: 4px 0; }
+#messages .info { opacity: 0.8; font-size: 12px; margin: 4px 0; }
+#stats { font-size: 12px; margin: 8px 0; }
+#stats table { border-collapse: collapse; width: 100%; }
+#stats td { padding: 2px 4px; border-bottom: 1px solid #8883; }
+#stats td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+.objects { display: flex; flex-direction: column; gap: 4px; }
+.obj { display: grid; grid-template-columns: 14px 1fr auto; gap: 2px 6px; align-items: center; padding: 4px 6px; border-radius: 5px; border: 1px solid transparent; font-size: 12px; cursor: pointer; }
+.obj.selected { border-color: #4a9; background: #4a91; }
+.obj.bad { border-color: #e55; }
+.obj .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.obj .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.obj .meta { grid-column: 2 / 4; opacity: 0.75; font-size: 11px; }
+.obj .btns { display: flex; gap: 2px; }
+.obj .btns button { flex: 0 0 auto; padding: 1px 5px; font-size: 11px; background: transparent; color: inherit; font-weight: 500; border-radius: 4px; }
+.obj .pos { grid-column: 1 / 4; display: flex; gap: 6px; align-items: center; font-size: 11px; }
+.obj .pos input { width: 52px; font-size: 11px; }
+.empty { font-size: 12px; opacity: 0.6; padding: 4px; }
+
+.help { margin-top: 6px; font-size: 12px; }
+.help summary { cursor: pointer; opacity: 0.85; }
+.help svg { width: 100%; height: auto; margin: 8px 0 4px; }
+.help p { margin: 6px 0; }
+.help ul { margin: 4px 0; padding-left: 16px; }
+.help li { margin: 4px 0; }
+.hl-part { fill: #8884; stroke: #888; stroke-width: 1; }
+.hl-bed { fill: #888; }
+.hl-dim { stroke: #999; stroke-width: 1; }
+.hl-label { font-size: 9px; fill: currentColor; }
+.hl-dim-t { opacity: 0.8; }
+.hl-wall-a { fill: #e57373; }
+.hl-wall-b { fill: #ffb74d; }
+.hl-wall-c { fill: #81c784; }
+.sw { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 2px; vertical-align: middle; }
+.sw.hl-wall-a { background: #e57373; } .sw.hl-wall-b { background: #ffb74d; } .sw.hl-wall-c { background: #81c784; }
